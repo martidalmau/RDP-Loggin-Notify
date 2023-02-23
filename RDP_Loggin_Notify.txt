@@ -1,0 +1,26 @@
+$rdpEvents = Get-WinEvent -FilterHashtable @{
+    LogName = 'Security'
+    Id = 4624
+} -MaxEvents 1 | Where-Object { $_.Properties[8].Value -eq 10 }
+
+if ($rdpEvents) {
+    $time = $rdpEvents.TimeCreated
+    $user = $rdpEvents.Properties[5].Value
+    $subject = "Nueva conexión de RDP registrada a las $time"
+    $body = "Se ha registrado una nueva conexión de RDP en el servidor a las $time, utilizando la cuenta de usuario $user."
+
+    $smtpServer = "smtp.gmail.com"
+    $smtpPort = "587"
+    $smtpUsername = "tucuenta@gmail.com"
+    $smtpPassword = "tupassword"
+
+    $from = "tucuenta@gmail.com"
+    $to = "cuentadestino@gmail.com"
+    $message = New-Object System.Net.Mail.MailMessage($from, $to, $subject, $body)
+
+    $smtpClient = New-Object System.Net.Mail.SmtpClient($smtpServer, $smtpPort)
+    $smtpClient.EnableSsl = $true
+    $smtpClient.Credentials = New-Object System.Net.NetworkCredential($smtpUsername, $smtpPassword)
+
+    $smtpClient.Send($message)
+}
